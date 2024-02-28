@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+      'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version:  '17'
+        distribution: 'temurin'
+    - name: Prior to  Install
+      run: |
+        sudo rm  -rf /var/lib/elasticsearch
+        curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.11.3-amd64.deb -o elasticsearch.deb && sudo dpkg -i  --force-confnew elasticsearch.deb
+ sudo cp ./src/test/resources/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
+        sudo cat /etc/elasticsearch/elasticsearch.yml
+        sudo java -version
+        sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch
+        sudo service elasticsearch start
+        sleep 30
+    - name: Install
+      run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+    - name: Script
+      run: |
+        ulimit -a
+        mvn test
